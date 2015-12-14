@@ -1,8 +1,10 @@
 import os
+
 import paramiko
 import pytest
-import mock
-import honey_pots.ssh.server
+
+import honey_pots.ssh_server
+
 
 class FakeClientSocket():
         def __init__(self, *args, **kwargs):
@@ -31,30 +33,30 @@ def fake_exit(mocker):
 
 @pytest.fixture(autouse=True)
 def socket_obj(mocker):
-    socket_mock = mocker.patch('honey_pots.ssh.server.socket').return_value
+    socket_mock = mocker.patch('honey_pots.ssh_server.socket').return_value
     return socket_mock
 
 
 @pytest.fixture(autouse=True)
 def paramiko_obj(mocker):
-    paramiko_mock = mocker.patch('honey_pots.ssh.server.paramiko').return_value
+    paramiko_mock = mocker.patch('honey_pots.ssh_server.paramiko').return_value
     return paramiko_mock
 
 
 @pytest.fixture
 def thread_obj(mocker):
-    thread_mock = mocker.patch('honey_pots.ssh.server.threading').return_value
+    thread_mock = mocker.patch('honey_pots.ssh_server.threading').return_value
     return thread_mock
 
 
 @pytest.fixture
 def incoming_connection_obj(mocker):
-    incoming_connection_mock = mocker.patch('honey_pots.ssh.server.incoming_connection').return_value
+    incoming_connection_mock = mocker.patch('honey_pots.ssh_server.incoming_connection').return_value
     return incoming_connection_mock
 
 @pytest.fixture
 def server_obj(mocker):
-    server_mock = mocker.patch('honey_pots.ssh.server.Server').return_value
+    server_mock = mocker.patch('honey_pots.ssh_server.Server').return_value
     return server_mock
 
 @pytest.fixture
@@ -63,25 +65,25 @@ def server_obj2(mocker):
         def __init__(self, *args, **kwargs):
             raise paramiko.SSHException
 
-    server_mock = mocker.patch('honey_pots.ssh.server.Server')
+    server_mock = mocker.patch('honey_pots.ssh_server.Server')
     server_mock.return_value = FakeServer
     return server_mock
 
 
 #def test_start_server(thread_obj, incoming_connection_obj):
-#    honey_pots.ssh.server.start_server()
+#    honey_pots.ssh_server.start_server()
 
 
 def test_incoming_connection(mocker, server_obj):
     
 
-    honey_pots.ssh.server.incoming_connection(FakeClientSocket())
+    honey_pots.ssh_server.incoming_connection(FakeClientSocket())
 
     mocker.patch.dict('os.environ', dict(
-        HONEY_POTS_SSH_RSA_KEY="{0}/real_rsa".format(os.path.dirname(os.path.realpath(__file__))),
+        HONEY_POTS_SSH_RSA_KEY="{0}/rsa".format(os.path.dirname(os.path.realpath(__file__))),
     ))
 
-    honey_pots.ssh.server.incoming_connection(FakeClientSocket())
+    honey_pots.ssh_server.incoming_connection(FakeClientSocket())
 
 
     mocker.patch.dict('os.environ', dict(
@@ -91,10 +93,10 @@ def test_incoming_connection(mocker, server_obj):
 
 def test_error_incoming_connection(mocker, server_obj2):
     mocker.patch.dict('os.environ', dict(
-        HONEY_POTS_SSH_RSA_KEY="{0}/real_rsa".format(os.path.dirname(os.path.realpath(__file__))),
+        HONEY_POTS_SSH_RSA_KEY="{0}/rsa".format(os.path.dirname(os.path.realpath(__file__))),
     ))
 
-    honey_pots.ssh.server.incoming_connection(FakeClientSocket())
+    honey_pots.ssh_server.incoming_connection(FakeClientSocket())
 
 
 def test_server():
@@ -105,7 +107,7 @@ def test_server():
         def get_base64(self):
             pass
 
-    sshd = honey_pots.ssh.server.Server(("127.0.0.1", 6666))
+    sshd = honey_pots.ssh_server.Server(("127.0.0.1", 6666))
     sshd.check_channel_request("", "")
     sshd.check_channel_request("session", "")
     sshd.check_auth_interactive("", "")
